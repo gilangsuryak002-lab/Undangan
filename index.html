@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Undangan Pernikahan Afifah & Gilang</title>
+  <!-- Font romantis -->
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Arial&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(to bottom, #fff0f5, #fffbe6);
+      color: #333;
+    }
+    header {
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2rem;
+      margin-bottom: 0.2rem;
+      color: #e75480;
+    }
+    h2 {
+      font-size: 1.1rem;
+      color: #888;
+    }
+    .countdown {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin: 2rem 0;
+      flex-wrap: wrap;
+    }
+    .box {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 10px;
+      text-align: center;
+      min-width: 70px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+    }
+    .box div {
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+    .rsvp, .photo-editor {
+      max-width: 600px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    label { display: block; margin-top: 1rem; }
+    input, button, select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      background: #e75480;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover { background: #c93c67; }
+    canvas { max-width: 100%; margin-top: 1rem; border: 1px dashed #ccc; }
+    #rsvpList ul { padding-left: 1rem; }
+    #rsvpList li { margin: 0.3rem 0; }
+    footer {
+      text-align:center;
+      padding: 2rem;
+      font-size:0.9rem;
+      color:#666;
+    }
+    @media (max-width: 480px) {
+      h1 { font-size: 1.5rem; }
+      .box { min-width: 50px; padding: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Undangan Pernikahan</h1>
+    <h1>Afifah Romadhon & Gilang Surya Kencana</h1>
+    <h2>(pipah) & (agil/lang)</h2>
+    <p>Tanggal: 30 November 2025</p>
+  </header>
+
+  <section class="countdown" id="countdown"></section>
+
+  <section class="rsvp">
+    <h3>Konfirmasi Kehadiran (RSVP)</h3>
+    <label>Nama Tamu:
+      <input type="text" id="guestName" placeholder="Masukkan nama Anda" />
+    </label>
+    <label>Status Kehadiran:
+      <select id="rsvpStatus">
+        <option value="">-- Pilih --</option>
+        <option value="Hadir">Hadir</option>
+        <option value="Tidak Hadir">Tidak Hadir</option>
+      </select>
+    </label>
+    <button onclick="submitRSVP()">Kirim RSVP</button>
+    <p id="rsvpMsg"></p>
+    <div id="rsvpList"></div>
+  </section>
+
+  <section class="photo-editor">
+    <h3>Editor Foto Undangan</h3>
+    <input type="file" id="upload" accept="image/*" />
+    <label>Kecerahan: <input type="range" id="brightness" min="50" max="150" value="100"></label>
+    <label>Kontras: <input type="range" id="contrast" min="50" max="150" value="100"></label>
+    <label>Saturasi: <input type="range" id="saturation" min="50" max="150" value="100"></label>
+    <label>Rotasi: <input type="range" id="rotate" min="-180" max="180" value="0"></label>
+    <canvas id="canvas"></canvas>
+    <button onclick="downloadImage()">Unduh Hasil</button>
+  </section>
+
+  <footer>
+    Dengan cinta, Afifah & Gilang — 30 November 2025
+  </footer>
+
+  <script>
+    // Countdown
+    const target = new Date("2025-11-30T00:00:00+07:00").getTime();
+    const cdEl = document.getElementById("countdown");
+    setInterval(() => {
+      const now = new Date().getTime();
+      let diff = target - now;
+      if (diff < 0) diff = 0;
+      const d = Math.floor(diff/(1000*60*60*24));
+      const h = Math.floor((diff/(1000*60*60))%24);
+      const m = Math.floor((diff/(1000*60))%60);
+      const s = Math.floor((diff/1000)%60);
+      cdEl.innerHTML = `
+        <div class='box'><div>${d}</div><small>Hari</small></div>
+        <div class='box'><div>${h}</div><small>Jam</small></div>
+        <div class='box'><div>${m}</div><small>Menit</small></div>
+        <div class='box'><div>${s}</div><small>Detik</small></div>
+      `;
+    }, 1000);
+
+    // RSVP
+    function submitRSVP(){
+      const name = document.getElementById("guestName").value;
+      const status = document.getElementById("rsvpStatus").value;
+      if(!name || !status){
+        document.getElementById("rsvpMsg").innerText = "Harap isi nama & status.";
+        return;
+      }
+      const ts = new Date().toLocaleString("id-ID", {timeZone:"Asia/Jakarta"});
+      const data = JSON.parse(localStorage.getItem("rsvp_afifah_gilang")||"[]");
+      data.push({name, status, ts});
+      localStorage.setItem("rsvp_afifah_gilang", JSON.stringify(data));
+      document.getElementById("rsvpMsg").innerText = "Terima kasih, konfirmasi tersimpan!";
+      showRSVPList();
+    }
+
+    function showRSVPList(){
+      const data = JSON.parse(localStorage.getItem("rsvp_afifah_gilang")||"[]");
+      if(data.length === 0){
+        document.getElementById("rsvpList").innerHTML = "<p>Belum ada tamu yang konfirmasi.</p>";
+        return;
+      }
+      const list = data.map(d=>`<li>${d.name} - ${d.status}</li>`).join("");
+      document.getElementById("rsvpList").innerHTML = "<h4>Daftar Konfirmasi:</h4><ul>"+list+"</ul>";
+    }
+    showRSVPList();
+
+    // Foto Editor
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let img = new Image();
+
+    document.getElementById("upload").addEventListener("change", e=>{
+      const file = e.target.files[0];
+      if(file){
+        const url = URL.createObjectURL(file);
+        img.onload = ()=> draw();
+        img.src = url;
+      }
+    });
+
+    ["brightness","contrast","saturation","rotate"].forEach(id=>{
+      document.getElementById(id).addEventListener("input", draw);
+    });
+
+    function draw(){
+      if(!img.src) return;
+      const br = document.getElementById("brightness").value;
+      const ct = document.getElementById("contrast").value;
+      const st = document.getElementById("saturation").value;
+      const rt = document.getElementById("rotate").value;
+      const w = img.width;
+      const h = img.height;
+      const rad = rt * Math.PI/180;
+
+      // hitung ukuran canvas baru supaya gambar tidak terpotong
+      const newW = Math.abs(w * Math.cos(rad)) + Math.abs(h * Math.sin(rad));
+      const newH = Math.abs(w * Math.sin(rad)) + Math.abs(h * Math.cos(rad));
+      canvas.width = newW;
+      canvas.height = newH;
+
+      ctx.save();
+      ctx.clearRect(0,0,newW,newH);
+      ctx.translate(newW/2,newH/2);
+      ctx.rotate(rad);
+      ctx.filter = `brightness(${br}%) contrast(${ct}%) saturate(${st}%)`;
+      ctx.drawImage(img, -w/2,-h/2);
+      ctx.restore();
+    }
+
+    function downloadImage(){
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = "foto-undangan.png";
+      a.click();
+    }
+  </script>
+</body>
+</html>
